@@ -4,7 +4,7 @@
   "description": "Our mission is to provide the best learning experiences to students, personalized to their unique learning pathway. One aspect of that personalization is academic level: students should work on content that is challenging, but not out of reach.",
   "main": "create_learning_paths.js",
   "scripts": {
-    "test": "tests.js",
+    "test": "mocha",
     "start": "nodemon create_learning_paths.js"
   },
   "author": "",

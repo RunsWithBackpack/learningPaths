@@ -18,7 +18,6 @@ var domainsArr = new Promise(function(resolve, reject){
   fs.readFile('./data/domain_order.csv', function (err, fileData) {
     parse(fileData, {delimiter: ',', rowDelimiter: '\n', relax_column_count: true }, function(err, rows) {
       if(err){ reject(err) }
-      console.log("ROWWS", rows)
       resolve(rows)
     })
   })
@@ -57,6 +56,9 @@ function convertStudentData(studentData){
   let converted = [];
   for (let i = 1; i < studentData.length; i++){
     let studentObj = {};
+    if (studentData[i].length === 1){
+      studentData[i] = studentData[i].concat(['K', 'K', 'K', 'K'])
+    }
     for (let j = 0; j < studentData[i].length; j++){
       if (studentData[i][j] === 'K'){
         studentObj[studentData[0][j]] = '0'
@@ -76,8 +78,9 @@ function getLearningPaths(students, domains){
     let learningPath = getLearningPath(student, domains)
     allLearningPaths.push(learningPath)
   })
-  console.log("uh", allLearningPaths)
-  pathsToCsv(allLearningPaths)
+  let csvPaths = pathsToCsv(allLearningPaths)
+  let completedExport = exportCsv(csvPaths)
+  return completedExport;
 }
 
 
@@ -88,8 +91,7 @@ function getLearningPath(studentObj, doms){
   while (path.length < 5){
     let lowestDom = minInObj(studentObj);
     let lowestScore = studentObj[lowestDom]
-
-    if (lowestScore > highestLevel){
+    if (lowestScore > highestLevel -1){
       break;
     }
     if (doms[lowestScore].includes(lowestDom)){
@@ -131,8 +133,7 @@ function pathsToCsv(allCompletePaths){
     csvContent.push(line)
   })
   let csvPaths = csvContent.join('\n')
-  console.log(csvPaths)
-  exportCsv(csvPaths)
+  return csvPaths
 }
 
 function exportCsv(paths){
@@ -141,5 +142,16 @@ function exportCsv(paths){
         return console.log(err);
     }
     console.log("The file was saved!");
+    return paths;
   });
+}
+
+module.exports = {
+  convertDomains,
+  convertStudentData,
+  getLearningPaths,
+  getLearningPath,
+  minInObj,
+  pathsToCsv,
+  exportCsv
 }
