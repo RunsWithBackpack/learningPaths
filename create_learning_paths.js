@@ -14,53 +14,28 @@ var studentData = new Promise(function(resolve, reject){
 })
 
 
-////I'm having a hard time finding a javascript CSV parser
-////that can deal with an inconsistent number of columns-
-////the one I'm using here rejects the promise for that reason,
-////so, instead, I'm using the domainsArr below as a stand-in
-
-// var domainOrder = new Promise(function(resolve, reject){
-//   fs.readFile('./data/domain_order.csv', function (err, fileData) {
-//     parse(fileData, {delimiter: ',', rowDelimiter: '\n' }, function(err, rows) {
-//       if(err){ reject(err) }
-//       resolve(rows)
-//     })
-//   })
-// })
-
-var domainsArr = [
-  [ 'K', 'RF', 'RL', 'RI' ],
-  [ '1', 'RF', 'RL', 'RI' ],
-  [ '2', 'RF', 'RI', 'RL', 'L' ],
-  [ '3', 'RF', 'RI', 'RL', 'L' ],
-  [ '4', 'RI', 'RL', 'L' ],
-  [ '5', 'RI', 'RL', 'L' ],
-  [ '6', 'RI', 'RL']
-]
-
-
-Promise.all([studentData])
-  .then(data => {
-    return data[0];
+var domainsArr = new Promise(function(resolve, reject){
+  fs.readFile('./data/domain_order.csv', function (err, fileData) {
+    parse(fileData, {delimiter: ',', rowDelimiter: '\n', relax_column_count: true }, function(err, rows) {
+      if(err){ reject(err) }
+      console.log("ROWWS", rows)
+      resolve(rows)
+    })
   })
-  .then(studentDataArr =>{
-    let domainsObjArr = convertDomains(domainsArr)
-    let studentObjArr = convertStudentData(studentDataArr);
+})
+
+
+
+Promise.all([studentData, domainsArr])
+  .then(data => {
+    let domainsObjArr = convertDomains(data[1])
+    let studentObjArr = convertStudentData(data[0]);
     getLearningPaths(studentObjArr, domainsObjArr)
   })
 
 
 let allLearningPaths = [];
 
-// var stuData = [
-//   ['Student Name', 'RF', 'RL', 'RI', 'L'],
-//   ['Jean-Luc', '2','3','K','3'],
-//   ['Worf', '4', '2','1', '1'],
-//   ['Riker', 'K', '4', '1', '2'],
-//   ['Deanna', '4', '3', '3', 'K'],
-//   ['Geordi', '1', '5', '5', '3'],
-//   ['Beverly', '5', '2', '3', '4'],
-// ]
 
 
 function convertDomains(domsArr){
@@ -102,6 +77,7 @@ function getLearningPaths(students, domains){
     allLearningPaths.push(learningPath)
   })
   console.log("uh", allLearningPaths)
+  pathsToCsv(allLearningPaths)
 }
 
 
@@ -144,4 +120,26 @@ function minInObj(obj){
     }
   })
   return output;
+}
+
+
+function pathsToCsv(allCompletePaths){
+  let csvContent = []
+  allCompletePaths.forEach((studentInfo, idx) => {
+    let line = studentInfo.join(',')
+    // csvContent.push(idx === 0 ? 'data:text/csv;charset=utf-8,' + line : line)
+    csvContent.push(line)
+  })
+  let csvPaths = csvContent.join('\n')
+  console.log(csvPaths)
+  exportCsv(csvPaths)
+}
+
+function exportCsv(paths){
+  fs.writeFile(__dirname + '/csvPaths/paths_output.csv', paths, function(err) {
+    if(err) {
+        return console.log(err);
+    }
+    console.log("The file was saved!");
+  });
 }
